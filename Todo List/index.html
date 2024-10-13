@@ -26,8 +26,18 @@ form {
     max-width: 500px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
-form input[type="text"], form input[type="date"], form select {
+form input[type="text"], form input[type="date"]{
     width: calc(100% - 30px);
+    padding: 10px;
+    margin: 15px 0;
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 5px;
+    outline: none;
+}
+form select {
+    width: 99%; /* Make it match the input fields */
     padding: 10px;
     margin: 15px 0;
     background-color: #333;

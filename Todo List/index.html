@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Todo List</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<style>
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+form {
+    background-color: #2b2b2b;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+form input[type="text"], form input[type="date"], form select {
+    width: calc(100% - 30px);
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 5px;
+    outline: none;
+}
+form input[type="submit"] {
+    background-color: maroon;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+form input[type="submit"]:hover {
+    background-color: #c0392b;
+}
+/* Task List Styles */
+ul {
+    list-style-type: none;
+    padding: 0;
+    width: 100%;
+    max-width: 600px;
+    background-color: #2b2b2b;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+li {
+    background-color: #333;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+li span {
+    flex: 1;
+    color: #f0f0f0;
+}
+li div {
+    display: flex;
+    gap: 10px;
+}
+button {
+    background-color: maroon;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+button:hover {
+    background-color: #c0392b;
+}
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+/* Completed Task Styles */
+.completed {
+    text-decoration: line-through;
+    color: #999;
+    background-color: #444;
+}
+
+li[data-priority="low"] {
+    border-left: 5px solid #2ecc71;
+}
+
+li[data-priority="medium"] {
+    border-left: 5px solid #f39c12;
+}
+
+li[data-priority="high"] {
+    border-left: 5px solid maroon;
+}
+
+/* Filter Buttons */
+.filter-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+.filter-buttons button {
+    flex: 1;
+    margin: 0 10px;
+    background-color: #555;
+    border-radius: 5px;
+}
+
+.filter-buttons button.active {
+    background-color: maroon;
+    color: #fff;
+}
+
+.filter-buttons button:hover {
+    background-color: #c0392b;
+}
+/* Responsive Design */
+@media (max-width: 768px) {
+    form, ul {
+        width: 90%;
+    }
+}
+
+@media (max-width: 480px) {
+    form input[type="submit"], button {
+        font-size: 14px;
+    }
+    
+    li {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    li div {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+</style>
+<body>
+    <div class="todo-container">
+        <h1>Todo List</h1>
+        <form id="todo-form">
+            <input type="text" id="task-input" placeholder="Enter your task" required>
+            <input type="date" id="task-due" required>
+            <select id="task-priority">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+            <button type="submit">Add Task</button>
+        </form>
+        
+        <div class="filter-btns">
+            <button id="filter-all" class="filter-btn">All</button>
+            <button id="filter-active" class="filter-btn">Active</button>
+            <button id="filter-completed" class="filter-btn">Completed</button>
+        </div>
+
+        <ul id="todo-list"></ul>
+    </div>
+    <script>
+   // Defining the tasks array and fetching from local storage (or an empty array if none exist)
+let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('todo-form');
+    const taskInput = document.getElementById('task-input');
+    const taskDue = document.getElementById('task-due');
+    const taskPriority = document.getElementById('task-priority');
+    const taskList = document.getElementById('todo-list');
+
+    // Render tasks based on filter
+    function renderTasks(filter = 'all') {
+        taskList.innerHTML = '';  // Clear current task list display
+
+        // Filter tasks based on the filter parameter
+        const filteredTasks = tasks.filter(task => {
+            if (filter === 'active') return !task.completed;  // Only show active tasks
+            if (filter === 'completed') return task.completed;  // Only show completed tasks
+            return true;  // For 'all', include all tasks
+        });
+
+        // Render each filtered task
+        filteredTasks.forEach((task, index) => {
+            const li = document.createElement('li');
+            li.classList.add(task.completed ? 'completed' : 'active');
+            li.dataset.priority = task.priority;
+
+            // Add task name, due date, and priority to be displayed
+            li.innerHTML = `
+                <span>${task.name} (Due: ${task.dueDate})</span>
+                <span>Priority: ${task.priority}</span>
+                <div>
+                    <button onclick="editTask(${index})">Edit</button>
+                    <button onclick="deleteTask(${index})">Delete</button>
+                    <button onclick="toggleComplete(${index})">${task.completed ? 'Undo' : 'Complete'}</button>
+                </div>
+            `;
+            taskList.appendChild(li);
+        });
+    }
+    // Add a new task
+    function addTask(e) {
+        e.preventDefault();
+        const task = {
+            name: taskInput.value,
+            dueDate: taskDue.value,
+            priority: taskPriority.value,
+            completed: false,
+        };
+        tasks.push(task);  // Add new task to the tasks array
+        localStorage.setItem('tasks', JSON.stringify(tasks));  // Save to localStorage
+        renderTasks();  // Re-render task list with the new task
+        form.reset();  // Reset form inputs
+    }
+    // Delete task
+    window.deleteTask = function(index) {
+        tasks.splice(index, 1);  // Remove task from array
+        localStorage.setItem('tasks', JSON.stringify(tasks));  // Save updated array to localStorage
+        renderTasks();  // Re-render tasks
+    }
+    // Toggle completed status
+    window.toggleComplete = function(index) {
+        tasks[index].completed = !tasks[index].completed;  // Toggle the task's completion status
+        localStorage.setItem('tasks', JSON.stringify(tasks));  // Save updated task to localStorage
+        renderTasks();  // Re-render tasks
+    }
+    // Edit task
+    window.editTask = function(index) {
+        const newTaskName = prompt("Edit Task Name", tasks[index].name);
+        const newDueDate = prompt("Edit Due Date", tasks[index].dueDate);
+        const newPriority = prompt("Edit Priority (low, medium, high)", tasks[index].priority);
+        if (newTaskName !== null && newTaskName.trim() !== "") {
+            tasks[index].name = newTaskName;
+        }
+        if (newDueDate !== null && newDueDate.trim() !== "") {
+            tasks[index].dueDate = newDueDate;
+        }
+        if (newPriority !== null && (newPriority === "low" || newPriority === "medium" || newPriority === "high")) {
+            tasks[index].priority = newPriority;
+        }
+
+        localStorage.setItem('tasks', JSON.stringify(tasks));  // Save updated task details to localStorage
+        renderTasks();  // Re-render tasks with updated info
+    }
+    // Filter tasks (all, active, completed)
+    document.getElementById('filter-all').addEventListener('click', () => renderTasks('all'));
+    document.getElementById('filter-active').addEventListener('click', () => renderTasks('active'));
+    document.getElementById('filter-completed').addEventListener('click', () => renderTasks('completed'));
+    // Handle form submit to add task
+    form.addEventListener('submit', addTask);
+    // Initially render tasks
+    renderTasks();
+});
+    </script>
+</body>
+</html>
